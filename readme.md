@@ -40,7 +40,10 @@ function pong(b::Mailbox, ...
 
 ## next steps
 
- - test nested rec
+ - put finishing touches to nested rec
+
+ = style of function declarations for spawning - function(params ...) function(self::Mailbox) ... end end
+
  - finite state machine
  - show methods for actors and mailboxes?
  - timeout in rec, start a separate task to send a :timeout message to this mailbox or do I mean a timedwait?
