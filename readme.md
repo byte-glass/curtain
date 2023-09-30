@@ -39,10 +39,12 @@ function pong(b::Mailbox, ...
 ```
 
 ## next steps
- - Curtain.jl?
+
  - test nested rec
+ - finite state machine
  - show methods for actors and mailboxes?
  - timeout in rec, start a separate task to send a :timeout message to this mailbox or do I mean a timedwait?
  - how to get Mailbox{T} to work?
+
 
 ### end
