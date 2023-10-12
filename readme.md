@@ -1,5 +1,21 @@
 # curtain -- actors in the style of erlang processes
 
+## latest -- i.e. as of 2023-10-12
+
+ - I tried to filter messages on a field :from in a message. In one message this was an Actor, in another it proved to be the mailbox of the actor. The test for equality of the two failed but this was not the behaviour I expected. Having both actors and mailboxes was the cause. Do away with actors, mailboxes alone will do. See `a.jl` and/or `b.jl`. The question now is whether or not to keep track of the task that is created in the function `spawn`.
+
+ - `rec` has been rewritten to take a list of guard and body pairs, implemented as a vector of pair{function, function}, the first function being the guard and returning a boolean, the second the body that is passed the matching message. The syntax looks good, viz
+
+```julia
+rec(self,
+    [msg(:please_forward) => m -> send(m[:to], (; msg = :forward, p = m)),
+     (_ -> true) => m -> nothing])
+```
+
+the indenting could be better. See `a.jl` for other examples.
+
+I will commit this lot as wip.
+
 
 ## motivation
 
@@ -40,12 +56,11 @@ function pong(b::Mailbox, ...
 
 ## next steps
 
- - put finishing touches to nested rec
-
+ - make notes on nested rec in readme
  = style of function declarations for spawning - function(params ...) function(self::Mailbox) ... end end
-
  - finite state machine
- - show methods for actors and mailboxes?
+
+ - show methods for actors and mailboxes? a hash for a pid for a show method
  - timeout in rec, start a separate task to send a :timeout message to this mailbox or do I mean a timedwait?
  - how to get Mailbox{T} to work?
 

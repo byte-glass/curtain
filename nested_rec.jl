@@ -6,8 +6,11 @@
 #
 
 
+module Nest
+
 using Curtain
 
+export echo, nest, delegate, tau
 
 function echo(s)
     function (self::Mailbox)
@@ -21,46 +24,40 @@ end
 
 msg(s) = m -> m[:msg] == s
 
-function nest(self::Mailbox, a::Actor)
-    while true
-        m = rec(self, [_ -> true])
-        if msg(:z)(m)
-            z = spawn(
-                  function (b::Mailbox)
-                      m = rec(b, [msg(:zeta)])
-                      h = hash(m[:k])
-                      send(m[:from], (; msg = :zeta_reply, h = h, t = tau()))
-                  end
-             )
-            send(z, (; msg = :zeta, from = self, k = "please hash this", t = tau()))
-            r = rec(self, [_ -> true])
-            send(a, (; msg = :nest_zeta, r = r, t = tau()))
-        else
-            send(a, (; msg = :nest, p = m))
-        end
-    end
-end
-
-
 function zeta()
     function (self::Mailbox)
         m = rec(self, [msg(:zeta)])
         h = hash(m[:k])
-        send(m[:from], (; msg = :zeta_reply, h = h, t = tau()))
+        sleep(2)
+        send(m[:from], (; msg = :zeta_reply, h = h, p = m, t = tau()))
     end
 end
 
-function nid(a::Actor)
+function nest(a::Actor)
     function (self::Mailbox)
         while true
             m = rec(self, [_ -> true])
             if msg(:z)(m)
                 z = spawn(zeta())
-                send(z, (; msg = :zeta, from = self, k = "please hash this", t = tau()))
-                r = rec(self, [_ -> true])
+                send(z, (; msg = :zeta, from = self, k = "please hash this", p = m, t = tau()))
+                r = rec(self, [msg(:zeta_reply)])
                 send(a, (; msg = :nest_zeta, r = r, t = tau()))
             else
-                send(a, (; msg = :nest, p = m))
+                send(a, (; msg = :nest, p = m, t = tau()))
+            end
+        end
+    end
+end
+
+function delegate(a::Actor)
+    function (self::Mailbox)
+        while true
+            m = rec(self, [_ -> true])
+            if msg(:z)(m)
+                z = spawn(zeta())
+                send(z, (; msg = :zeta, from = self, k = "please hash this", p = m, t = tau()))
+            else
+                send(a, (; msg = :nest, p = m, t = tau()))
             end
         end
     end
@@ -72,33 +69,43 @@ function tau()
     round(time() - _t0; digits = 2)
 end
 
+end
 
-a = spawn(echo(:vanilla));
+
+using Curtain
+
+using .Nest
+
 a = echo(:vanilla) |> spawn;
 
-p = spawn(b -> nest(b, a));
+p = nest(a) |> spawn;
 
 send(p, (; msg = :x, p = "xyz"))
 send(p, (; msg = :y, p = pi))
-
-q = spawn(b -> nest(b, spawn(echo(:green))));
-q = spawn(b -> nest(b, echo(:green) |> spawn));
-
-send(q, (; msg = :y, p = pi))
-send(q, (; msg = :x, p = "abc", t = tau()))
-send(q, (; msg = :z, q = -1))
-
-send(q, (; msg = :z, t = tau()))
+send(p, (; msg = :z, q = -1))
 
 
-r = spawn(nid(spawn(echo(:pink))))
+rho = echo(:pink) |> spawn |> nest |> spawn
 
-rho = echo(:pink) |> spawn |> nid |> spawn
+send(rho, (; msg = :x, q = 0, t = tau()))
 
-send(rho, (; msg = :x, q = -1))
+begin
 send(rho, (; msg = :z, t = tau()))
+send(rho, (; msg = :a, q = 1, t = tau()))
+send(rho, (; msg = :b, q = 2, t = tau()))
+send(rho, (; msg = :c, q = 3, t = tau()))
+end
 
+delta = echo(:green) |> spawn |> delegate |> spawn
 
+send(delta, (; msg = :x, q = 0, t = tau()))
+
+begin
+send(delta, (; msg = :z, t = tau()))
+send(delta, (; msg = :a, q = 1, t = tau()))
+send(delta, (; msg = :b, q = 2, t = tau()))
+send(delta, (; msg = :c, q = 3, t = tau()))
+end
 
 
 ### end
