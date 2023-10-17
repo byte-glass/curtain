@@ -29,8 +29,6 @@ send(echo, (; msg = :are, p = "you there"))
 
 ## forward
 
-msg(s) = m -> m[:msg] == s
-
 function forward_process()
     function (self::Mailbox)
         while true

@@ -2,7 +2,7 @@
 
 module Curtain
 
-export Mailbox, rec, send, spawn
+export Mailbox, rec, send, spawn, msg
 
 
 struct Mailbox
@@ -55,6 +55,14 @@ function spawn(f::Function)
     schedule(t)
     return b
 end
+
+## convenience function for handling messages of the form
+##
+##      (; msg = :msg_type, payload = ... )
+##
+
+msg(s) = m -> m[:msg] == s
+
 
 
 end
