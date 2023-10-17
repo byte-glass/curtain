@@ -2,7 +2,8 @@
 
 module Curtain
 
-export Mailbox, rec, send, Actor, spawn
+export Mailbox, rec, send, spawn
+
 
 struct Mailbox
     queue::Vector{Any}
@@ -10,23 +11,31 @@ struct Mailbox
     Mailbox() = new(Vector{Any}(), Channel{Any}(32))
 end
 
+function send(b::Mailbox, message::Any)
+    put!(b.channel, message)
+    return
+end
+
 nonnull(x) = !isnothing(x)
 nonempty(x) = !isempty(x)
+
 
 function rec(b, k)
     while isready(b.channel)
         push!(b.queue, take!(b.channel))
     end
     found = false
+    v = nothing
     m = nothing
     while !found
         j = copy(k)
         while nonempty(j) && !found
             kappa = popfirst!(j)
-            r = findfirst(kappa, b.queue)
+            r = findfirst(kappa.first, b.queue)
             if nonnull(r)
                 found = true
                 m = popat!(b.queue, r)
+                v = kappa.second(m)
             end
         end
         if !found
@@ -36,31 +45,19 @@ function rec(b, k)
             end
         end
     end
-    return m
+    return v
 end
 
-function send(b::Mailbox, message::Any)
-    put!(b.channel, message)
-    return
-end
-
-struct Actor
-    mailbox::Mailbox
-    task::Task
-end
-
-function send(a::Actor, message::Any)
-    send(a.mailbox, message)
-end
         
 function spawn(f::Function)
     b = Mailbox()
     t = @task begin f(b); end
     schedule(t)
-    return Actor(b, t)
+    return b
 end
 
 
 end
+
 
 ### end

@@ -10,86 +10,71 @@ using Curtain
 
 ## echo
 
-function echo(b::Mailbox)
-    while true
-        m = rec(b, [_ -> true])
-        print(string((; msg = :echo, p = m)) * "\n")
+function echo_process(s)
+    function (self::Mailbox)
+        while true
+            rec(self, 
+                [(_ -> true) => 
+                    m -> print(string((; echo = s, p = m)) * "\n")])
+        end
     end
 end
 
-echo_server = spawn(echo);
 
-send(echo_server.mailbox, "echo this!")
-send(echo_server, (; msg = :are, p = "you there"))
+echo = echo_process(:vanilla) |> spawn;
 
-
-## sink
-
-function sink(b::Mailbox)
-    while true
-        rec(b, [_ -> false])
-    end
-end
-
-sink_server = spawn(sink)
-
-send(sink_server, (; m = "eat my shorts", p = 0))
-send(sink_server, (; m = "whaaaaa??", p = -1))
-
-sink_server.mailbox.queue
+send(echo, "echo this!")
+send(echo, (; msg = :are, p = "you there"))
 
 
 ## forward
 
 msg(s) = m -> m[:msg] == s
 
-function forward(b::Mailbox)
-    m = rec(b, [msg(:please_forward)])
-    send(m[:to], (; msg = :forward, p = m))
+function forward_process()
+    function (self::Mailbox)
+        while true
+            rec(self,
+                [msg(:please_forward) => m -> send(m[:to], (; msg = :forward, p = m)),
+                 (_ -> true) => m -> nothing])
+        end
+    end
 end
 
-forwarder = spawn(forward)
-echo_server = spawn(echo)
-send(forwarder, (; msg = :please_forward, to = echo_server, a = 1, b = "xyz"))
+forward = spawn(forward_process())
+whisper = spawn(echo_process(:whisper))
 
-forwarder = spawn(forward)
-sink_server = spawn(sink)
-send(forwarder, (; msg = :please_forward, to = sink_server, a = 0, b = "it's all over!"))
+send(forward, (; msg = :please_forward, to = whisper, a = 1, b = "xyz"))
 
-sink_server.mailbox.queue
+send(forward, (; msg = :what_ever, to = whisper, x = "boo"))
 
 
 ## ping pong
 
-function ping(self::Mailbox, pong)
-    send(pong, (; msg = :ping, from = self, p = "this is a ping"))
-    m = rec(self, [_ -> true])
-    print(string((; received = m)) * "\n")
-end
-
-echo_server = spawn(echo)
-pinger = spawn(b -> ping(b, echo_server)); # without `;` the output in the repl is messy!
-
-
-function pong(self::Mailbox) 
-    while true
-        m = rec(self, [msg(:ping)])
-        send(m[:from], (; msg = :pong, q = m))
+function pong_process()
+    function (self::Mailbox) 
+        while true
+            rec(self, [msg(:ping) => m -> send(m[:from], (; msg = :pong, from = self, m = m))])
+        end
     end
 end
 
 
-pong_server = spawn(pong)
+pong = spawn(pong_process());
 
-sink_server = spawn(sink)
-send(pong_server, (; msg = :ping, from = sink_server, p = "sink this"))
-sink_server.mailbox.queue
+echo = spawn(echo_process(:echo))
 
-echo_server = spawn(echo)
-send(pong_server, (; msg = :ping, from = echo_server, p = "echo this and that"))
+send(pong, (; msg = :ping, from = echo))
 
-pinger = spawn(b -> ping(b, pong_server)); # see comment above
 
+function ping_process(pong)
+    function (self::Mailbox)
+        send(pong, (; msg = :ping, from = self))
+        rec(self, [(m -> m[:from] == pong) => m -> println("I got a pong - " * string(m))])
+    end
+end
+
+# ping = spawn(ping_process(pong));
 
 
 ### end
