@@ -115,21 +115,90 @@ end
 function ping_process(pong)
     function (self::Mailbox)
         send(pong, (; msg = :ping, from = self))
-        # p = rec(self, [msg(:pong) => m -> m])
-        # p = rec(self, [(m -> m[:from] == pong.mailbox) => m -> m])
-        p = rec(self, [(m -> m[:from] == pong) => m -> m])
-        println(string(p))
+        rec(self, [(m -> m[:from] == pong) => m -> println("I got a pong - " * string(m))])
     end
 end
 
 pong = spawn(pong_process());
 
-# echo = spawn(echo_process(:echo))
+echo = spawn(echo_process(:echo))
 
-# m = (; msg = :ping, from = echo)
+m = (; msg = :ping, from = echo)
 
-ping = spawn(ping_process(pong));
+# ping = spawn(ping_process(pong));
 
+
+## nest
+
+function zeta()
+    function (self::Mailbox)
+        rec(self, 
+            [msg(:zeta) => 
+                m -> begin
+                    h = hash(m[:k])
+                    sleep(2)
+                    send(m[:from], (; msg = :zeta_reply, from = self, h = h, p = m, t = tau()))
+                end])
+    end
+end
+
+function nest(a::Mailbox)
+    function (self::Mailbox)
+        while true
+            rec(self, 
+                [msg(:z) => 
+                     m -> begin
+                         z = spawn(zeta())
+                         send(z, (; msg = :zeta, from = self, k = "please hash this", p = m, t = tau()))
+                         rec(self,
+                             [(m -> m[:from] == z) => 
+                                  m -> begin
+                                      println(z)
+                                      println(m[:from])
+                                      guard = ((m -> m[:from] == z)(m))
+                                      println("guard is $guard")
+                                      send(a, (; msg = :nest_zeta, p = m, t = tau()))
+                                  end])
+                     end,
+                 (_ -> true) => m -> send(a, (; msg = :nest, p = m, t = tau()))])
+        end
+    end
+end
+
+function delegate(a::Mailbox)
+    function (self::Mailbox)
+        while true
+            rec(self,
+                [msg(:z) =>
+                    m -> begin
+                        z = spawn(zeta())
+                        send(z, (; msg = :zeta, from = self, k = "please hash this", p = m, t = tau()))
+                    end,
+                 msg(:zeta_reply) => m -> send(a, (; msg = :delegate_zeta, p = m, t = tau())),
+                 (_ -> true) => m -> send(a, (; msg = :delegate, p = m, t = tau()))])
+        end
+    end
+end
+
+
+_t0 = time()
+
+function tau()
+    round(time() - _t0; digits = 2)
+end
+
+
+a = echo_process(:vanilla) |> spawn;
+
+# d = delegate(a) |> spawn;
+
+p = nest(a) |> spawn;
+
+begin
+send(p, (; msg = :z, q = -1, t = tau()))
+send(p, (; msg = :x, p = "xyz", t = tau()))
+send(p, (; msg = :y, p = pi, t = tau()))
+end
 
 
 ### end

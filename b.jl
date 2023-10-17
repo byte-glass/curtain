@@ -139,5 +139,66 @@ m = (; msg = :ping, from = echo)
 ping = spawn(ping_process(pong));
 
 
+## nest
+
+function zeta()
+    function (self::Mailbox)
+        rec(self, 
+            [msg(:zeta) => 
+                m -> begin
+                    h = hash(m[:k])
+                    sleep(2)
+                    send(m[:from], (; msg = :zeta_reply, from = self, h = h, p = m, t = tau()))
+                end])
+    end
+end
+
+function nest(a::Mailbox)
+    function (self::Mailbox)
+        while true
+            rec(self, 
+                [msg(:z) => 
+                     m -> begin
+                         z = spawn(zeta())
+                         send(z, (; msg = :zeta, from = self, k = "please hash this", p = m, t = tau()))
+                         rec(self,
+                             [msg(:zeta_reply) => #(m -> m[:from] == z) => 
+                                  m -> begin
+                                      send(a, (; msg = :nest_zeta, p = m, t = tau()))
+                                  end])
+                     end,
+                 (_ -> true) => m -> send(a, (; msg = :nest, p = m, t = tau()))])
+        end
+    end
+end
+
+# function nid(a::Mailbox)
+#     function (self::Mailbox)
+#         while true
+#             rec(self,
+#                 [(_ -> true) =>
+#                     m -> begin
+#                     end
+#         end
+#     end
+# end
+
+
+_t0 = time()
+
+function tau()
+    round(time() - _t0; digits = 2)
+end
+
+
+a = echo_process(:vanilla) |> spawn;
+
+p = nest(a) |> spawn;
+
+begin
+send(p, (; msg = :z, q = -1, t = tau()))
+send(p, (; msg = :x, p = "xyz", t = tau()))
+send(p, (; msg = :y, p = pi, t = tau()))
+end
 
 ### end
