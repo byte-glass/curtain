@@ -1,6 +1,16 @@
 # curtain -- actors in the style of erlang processes
 
-## latest -- i.e. as of 2023-10-12
+## latest
+
+There is a problem with testing for a message being from a particular process, see a.jl::154
+
+                             [msg(:zeta_reply) => # (m -> m[:from] == z) => 
+
+The code above works as expected when several messages are sent before the zeta process has replied but the commented out code does not. It is fine for a single message but not if others are sent before the reply from zeta is received !?!?
+
+On the other hand, see function `ping_process`.
+
+## `Actor` and `Mailbox`
 
  - I tried to filter messages on a field :from in a message. In one message this was an Actor, in another it proved to be the mailbox of the actor. The test for equality of the two failed but this was not the behaviour I expected. Having both actors and mailboxes was the cause. Do away with actors, mailboxes alone will do. See `a.jl` and/or `b.jl`. The question now is whether or not to keep track of the task that is created in the function `spawn`.
 
@@ -55,10 +65,6 @@ function pong(b::Mailbox, ...
 ```
 
 ## next steps
-
- - make notes on nested rec in readme
- = style of function declarations for spawning - function(params ...) function(self::Mailbox) ... end end
- - finite state machine
 
  - show methods for actors and mailboxes? a hash for a pid for a show method
  - timeout in rec, start a separate task to send a :timeout message to this mailbox or do I mean a timedwait?
