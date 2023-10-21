@@ -1,5 +1,16 @@
 # curtain -- erlang style processes
 
+## latest
+
+ - print debugging of Curtain.jl
+
+## next steps
+
+ - a finite state machine
+ - send a message with a new function to execute?
+
+ - Mailbox{Any} -- how to write Mailbox{T} and pass in channel and queue capacity??
+
 ## contents
 
 The module `Curtain` defines mailboxes and their behaviour. The definition of the function `spawn` explains much of what is going on here. 
