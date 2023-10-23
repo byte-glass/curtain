@@ -1,15 +1,21 @@
 # curtain -- erlang style processes
 
-## latest
-
- - print debugging of Curtain.jl
-
 ## next steps
+
+ - [wip] merge murk/Fortune.jl
 
  - a finite state machine
  - send a message with a new function to execute?
 
  - Mailbox{Any} -- how to write Mailbox{T} and pass in channel and queue capacity??
+
+## The donkey is taking a good long look at me - the "nested rec" saga
+
+[In `./murk/a.jl`] A guard `m -> m[:from] == z` in `from_process` caused an error (threw an exception?) when presented with a message _without_ a field `:from`. This caused the task to fail, the message in question was `(; msg = :x, t = tau())`.
+
+This has been put right and it now runs without error, the fix `(m -> get(m, :from, false) == z)`
+
+It should be kept in mind that checking equality against another process is _not a good idea_. That process could well have done its work, terminated successfully and been swept up. What would a test for equality yield then??
 
 ## contents
 
@@ -28,7 +34,9 @@ It expects a function as its argument, that function takes a mailbox as its argu
 
 `examples.jl` has processes that echo messages, forward messages to another process and a pong process that returns a ping. A process can spawn a subprocess and delegate a computation to it, see `delegate.jl`.
 
-## nested calls to `rec`
+## dir. `murk` 
+
+### nested calls to `rec`
 
 In erlang calls to `rec` can be nested. [In erlang it is a keyword rather than a function.] Here nested calls to `rec` lead to puzzling behaviour. In short, I suspect this leads to contention (or at the very least, confusion) over the mailbox that a task is running with. A task wakes up when a new message arrives in a channel. If that message does not satisfy a guard function in the call to rec, it will sit in the queue in the mailbox and the task may never get another chance to deal with it. See `nested.jl` if you are curious.
 
@@ -37,4 +45,4 @@ In erlang calls to `rec` can be nested. [In erlang it is a keyword rather than a
 The file `notes.jl` covers an earlier version and problems with it in particular the behaviour of nested calls to `rec`.
 
 
-### end
+#### end
