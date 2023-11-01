@@ -32,7 +32,7 @@ or possibly,
 for m in [:a, :b]
     rec(self, [msg(m) => true, (_ -> true) => assert(false)], timeout = 2)
 end
-```end
+```
 
 and `[:a, :b]` could be an argument to a function `catcher_process`
 
