@@ -38,7 +38,12 @@ nonnull(x) = !isnothing(x)
 nonempty(x) = !isempty(x)
 
 
-function rec(p, k)
+function rec(p, k; timeout = nothing)
+    # this handling of timeouts is too naive and leads to a timeout message being scheduled for each call to `rec`. timeouts scheduled by previous calls will arrive and be earlier than expected for the current call - this is not the desired behaviour. a long running timeout process for each (normal) process?
+    if !isnothing(timeout)
+        t = @task begin sleep(timeout); send(p, (; msg = :timeout, timeout = timeout)) end
+        schedule(t)
+    end
     while isready(p.channel)
         m = take!(p.channel)
         @info (; call = :take, p = p, m = m, ready = true)

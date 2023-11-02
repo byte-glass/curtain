@@ -1,5 +1,9 @@
 # murk
 
+## timeouts
+
+`Fortune.jl` has a naive implementation of timeouts, see note there for further explanation.
+
 ## module Tau
 
 or BigBen to allow `t = tau()` in logging in the module Curtain and e.g. x.jl
