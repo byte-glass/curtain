@@ -9,6 +9,20 @@
 
  - Mailbox{Any} -- how to write Mailbox{T} and pass in channel and queue capacity??
 
+## Fortune.jl
+
+This seems to work nicely!
+
+Note: `rec` expects pairs of functions that _each_ expect a message, the first is the guard (and obviously takes a message as its argument), the second is the body i.e. what to do with the message that passed the guard -- in other words, it is a function that takes a message as its argument. 
+
+If the body does not depend on the message beyond the fact that it has satisfied the guard then the body should be `_ -> ...`.
+
+## `state_machine.jl`
+
+[Now that I have figured out that body clauses _also_ expect a message!] this works quite nicely!
+
+### The donkey is laughing its arse off!!
+
 ## The donkey is taking a good long look at me - the "nested rec" saga
 
 [In `./murk/a.jl`] A guard `m -> m[:from] == z` in `from_process` caused an error (threw an exception?) when presented with a message _without_ a field `:from`. This caused the task to fail, the message in question was `(; msg = :x, t = tau())`.
