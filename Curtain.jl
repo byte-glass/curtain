@@ -32,7 +32,7 @@ function spawn(f::Function, s = Symbol(lowercase(randstring(4))))
 end
 
 function send(p::Process, message::Any)
-    @info (; call = :put, p = p, message = message)
+    @debug (; call = :put, p = p, message = message)
     put!(p.channel, message)
     return nothing # message
 end
@@ -48,7 +48,7 @@ function rec(p, k; timeout = nothing)
     end
     while isready(p.channel)
         m = take!(p.channel)
-        @info (; call = :take, p = p, m = m, ready = true)
+        @debug (; call = :take, p = p, m = m, ready = true)
         push!(p.queue, m)
     end
     found = false
@@ -69,7 +69,7 @@ function rec(p, k; timeout = nothing)
             wait(p.channel)
             while isready(p.channel)
                 m = take!(p.channel)
-                @info (; call = :take, p = p, m = m, found = false)
+                @debug (; call = :take, p = p, m = m, found = false)
                 push!(p.queue, m)
             end
         end

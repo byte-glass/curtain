@@ -8,7 +8,7 @@
 using Curtain
 
 function echo_process(s)
-    function (self::Mailbox)
+    function (self::Process)
         while true
             rec(self, 
                 [(_ -> true) => 
@@ -18,7 +18,7 @@ function echo_process(s)
 end
 
 function zeta_process()
-    function (self::Mailbox)
+    function (self::Process)
         rec(self, 
             [msg(:zeta) => 
                 m -> begin
@@ -29,13 +29,13 @@ function zeta_process()
     end
 end
 
-function delegate_process(a::Mailbox)
-    function (self::Mailbox)
+function delegate_process(a::Process)
+    function (self::Process)
         while true
             rec(self,
                 [msg(:z) =>
                     m -> begin
-                        z = spawn(zeta_process())
+                        z = spawn(zeta_process(), :zeta_process)
                         send(z, (; msg = :zeta, from = self, k = "please hash this", p = m, t = tau()))
                     end,
                  msg(:zeta_reply) => m -> send(a, (; msg = :delegate_zeta, p = m, t = tau())),
@@ -50,10 +50,10 @@ function tau()
     round(time() - _t0; digits = 2)
 end
 
-echo = echo_process(:vanilla) |> spawn;
-
-delegate = delegate_process(echo) |> spawn;
-
+# echo = spawn(echo_process(:echo), :echo)
+# 
+# delegate = spawn(delegate_process(echo), :delegate)
+# 
 # send(delegate, (; msg = :z, q = -1, t = tau()))
 # send(delegate, (; msg = :x, p = "xyz", t = tau()))
 # send(delegate, (; msg = :y, p = pi, t = tau()))

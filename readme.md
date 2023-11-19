@@ -1,6 +1,8 @@
 # curtain -- erlang style processes
 
 ## latest 
+ - get delegate.jl working
+ - change logging in Curtain to `debug` rather than `info`
  - merge murk/Fortune.jl into Curtain.jl, get examples.jl working 
 
 ## next steps
