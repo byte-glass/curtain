@@ -10,9 +10,13 @@ mutable struct Process
     queue::Vector{Any}
     channel::Channel{Any}
     task::Task
+    timer::Union{Nothing, Timer}
 end
 
-Process(s::Symbol) = Process(s, Vector{Any}(), Channel{Any}(32), @task begin end)
+Process(s::Symbol) = begin
+    t = @task begin end
+    Process(s, Vector{Any}(), Channel{Any}(32), t, Timer(_ -> nothing, 0))
+end
 
 import Base.show
 show(io::IO, p::Process) = show(io, p.id)
@@ -30,7 +34,7 @@ end
 function send(p::Process, message::Any)
     @info (; call = :put, p = p, message = message)
     put!(p.channel, message)
-    return message
+    return nothing # message
 end
 
 
@@ -39,10 +43,8 @@ nonempty(x) = !isempty(x)
 
 
 function rec(p, k; timeout = nothing)
-    # this handling of timeouts is too naive and leads to a timeout message being scheduled for each call to `rec`. timeouts scheduled by previous calls will arrive and be earlier than expected for the current call - this is not the desired behaviour. a long running timeout process for each (normal) process?
     if !isnothing(timeout)
-        t = @task begin sleep(timeout); send(p, (; msg = :timeout, timeout = timeout)) end
-        schedule(t)
+        p.timer = Timer(_ -> send(p, (; msg = :timeout, timeout = timeout)), timeout)
     end
     while isready(p.channel)
         m = take!(p.channel)
@@ -71,6 +73,9 @@ function rec(p, k; timeout = nothing)
                 push!(p.queue, m)
             end
         end
+    end
+    if !isnothing(timeout)
+        close(p.timer)
     end
     return v
 end

@@ -4,6 +4,7 @@
 
 using Fortune
 
+
 function t_process(timeout)
     function (p::Process)
         done = false
@@ -20,11 +21,18 @@ function t_process(timeout)
     end
 end
 
+
 # t = spawn(t_process(5));
-# 
+
 # send(t, (; msg = :a))
 # send(t, (; msg = :b))
-# send(t, (; msg = :c))
+
+# n = 0
+# while true
+#     n += 1
+#     send(t, (; msg = :c, n = n))
+#     sleep(3)
+# end
 
 
 ### end

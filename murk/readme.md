@@ -1,8 +1,13 @@
 # murk
 
-## timeouts
+## latest
+ - a workable implementation of timeouts, see `timeouts.jl` for examples
 
-`Fortune.jl` has a naive implementation of timeouts, see note there for further explanation.
+## contents
+ - Fortune.jl -- current version of `Process` etc
+ - Curtain.jl -- previous version
+ - timeout.jl -- examples of timeouts
+ - a.jl, x.jl and nested.jl -- various versions of nested `rec` calls, could do with tidying up!
 
 ## module Tau
 
