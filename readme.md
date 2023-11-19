@@ -1,12 +1,10 @@
 # curtain -- erlang style processes
 
+## latest 
+ - merge murk/Fortune.jl into Curtain.jl, get examples.jl working 
+
 ## next steps
-
  - [wip] merge murk/Fortune.jl
-
- - a finite state machine
- - send a message with a new function to execute?
-
  - Mailbox{Any} -- how to write Mailbox{T} and pass in channel and queue capacity??
 
 ## Fortune.jl

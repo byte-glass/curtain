@@ -11,7 +11,7 @@ using Curtain
 ## echo
 
 function echo_process(s)
-    function (self::Mailbox)
+    function (self::Process)
         while true
             rec(self, 
                 [(_ -> true) => 
@@ -21,7 +21,7 @@ function echo_process(s)
 end
 
 
-echo = echo_process(:vanilla) |> spawn;
+echo = spawn(echo_process(:vanilla), :echo)
 
 send(echo, "echo this!")
 send(echo, (; msg = :are, p = "you there"))
@@ -30,7 +30,7 @@ send(echo, (; msg = :are, p = "you there"))
 ## forward
 
 function forward_process()
-    function (self::Mailbox)
+    function (self::Process)
         while true
             rec(self,
                 [msg(:please_forward) => m -> send(m[:to], (; msg = :forward, p = m)),
@@ -39,8 +39,8 @@ function forward_process()
     end
 end
 
-forward = spawn(forward_process())
-whisper = spawn(echo_process(:whisper))
+forward = spawn(forward_process(), :forward)
+whisper = spawn(echo_process(:whisper), :whisper)
 
 send(forward, (; msg = :please_forward, to = whisper, a = 1, b = "xyz"))
 
@@ -50,7 +50,7 @@ send(forward, (; msg = :what_ever, to = whisper, x = "boo"))
 ## ping pong
 
 function pong_process()
-    function (self::Mailbox) 
+    function (self::Process) 
         while true
             rec(self, [msg(:ping) => m -> send(m[:from], (; msg = :pong, from = self, m = m))])
         end
@@ -58,21 +58,21 @@ function pong_process()
 end
 
 
-pong = spawn(pong_process());
+pong = spawn(pong_process(), :pong)
 
-echo = spawn(echo_process(:echo))
+echo = spawn(echo_process(:echo), :echo)
 
 send(pong, (; msg = :ping, from = echo))
 
 
 function ping_process(pong)
-    function (self::Mailbox)
+    function (self::Process)
         send(pong, (; msg = :ping, from = self))
         rec(self, [(m -> m[:from] == pong) => m -> println("I got a pong - " * string(m))])
     end
 end
 
-# ping = spawn(ping_process(pong));
+# ping = spawn(ping_process(pong), :ping);
 
 
 ### end
