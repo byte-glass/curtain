@@ -1,6 +1,8 @@
 # curtain -- erlang style processes
 
 ## latest 
+ - remove Fortune.jl
+ - get state_machine.jl working
  - get delegate.jl working
  - change logging in Curtain to `debug` rather than `info`
  - merge murk/Fortune.jl into Curtain.jl, get examples.jl working 
@@ -43,6 +45,8 @@ function spawn(f::Function)
     return b
 end
 ```
+
+Note: `Mailbox` is `Process` in the current version of Curtain.jl.
 
 It expects a function as its argument, that function takes a mailbox as its argument. A task is created to evaluate the function with a freshly created mailbox and the task is scheduled. It is the mailbox that is returned by the call to spawn. This means that processes (strictly speaking - mailboxes) can pass themselves in messages for example as the return address for a computation.
 

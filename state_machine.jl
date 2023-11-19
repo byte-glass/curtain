@@ -11,7 +11,7 @@
 #   $ TERM=dumb JULIA_LOAD_PATH="$JULIA_LOAD_PATH:$(pwd)" rlwrap -a julia [-i state_machine.jl]
 
 
-using Fortune
+using Curtain
 
 function a(self::Process, n)
     rec(self,
@@ -55,9 +55,9 @@ function state_machine_process(echo)
 end
 
 
-echo = spawn(echo_process());
+echo = spawn(echo_process(), :echo);
 
-m = spawn(state_machine_process(echo));
+m = spawn(state_machine_process(echo), :state_machine);
  
 # send(m, (; msg = :a));
 # send(m, (; msg = :b));
